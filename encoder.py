@@ -3,7 +3,7 @@ import pandas as pd
 
 debug_mode = 0
 
-def encoder(ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC):
+def ursp_encoder(ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC):
     payload_pvtd_list = []
     payload_rsd_list = []
 

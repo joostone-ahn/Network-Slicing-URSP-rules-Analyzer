@@ -6,7 +6,7 @@ from PyQt5.QtCore import Qt, QCoreApplication
 import pandas as pd
 import re
 import tabulate
-import ursp_encoder, ursp_decoder, spec, display, excel
+import encoder, decoder, spec, display, excel
 
 debug_mode = 0
 
@@ -186,11 +186,12 @@ class MyWidget(QWidget):
         DE_btn.clicked.connect(self.DE_btn_clicked)
         DE_btn_hbox.addWidget(DE_btn)
         self.DE_label = QLabel()
+        self.DE_label.setFont(font_log)
         DE_btn_hbox.addWidget(self.DE_label)
         DE_btn_hbox.addStretch()
         self.tab2_vbox.addLayout(DE_btn_hbox)
 
-        self.log_text.setText("""Please paste hex values of 5GMM 'Downlink NAS Transport' message containing 'UE Policy Container'.
+        self.log_text.setText("""Please paste hex values of NAS message containing 'UE policy container'.
 
 Sample
     0000   98 7a 10 a4 6f 51 00 15 17 ab b1 87 08 00 45 02
@@ -546,8 +547,8 @@ Sample
         PLMN = self.plmn.text()
         UPSC = self.upsc.text()
 
-        df_dl_nas, ef_ursp, dl_nas = ursp_encoder.encoder(ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC)
-        df_payload, ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC = ursp_decoder.decoder(df_dl_nas)
+        df_dl_nas, ef_ursp, dl_nas = encoder.ursp_encoder(ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC)
+        df_payload, ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC = decoder.ursp_decoder(df_dl_nas)
         self.pol_cmd_excel = df_payload
 
         ursp_info, ursp_conts = display.ursp_to_txt(ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC)
@@ -648,21 +649,60 @@ Sample
         hex_int = [int(x, 16) for x in hex_values]
         hex_str = [f'{x:02X}' for x in hex_int]
 
+        # DL NAS Transport
         if '68' in hex_str:
             start = hex_str.index('68')
-            df_dl_nas = pd.DataFrame({'hex': hex_str[start:]})
+            payload_type = hex_str[start+1]
+            # Payload container type: UE policy container
+            if payload_type == '05':
+                # UE policy deliver service type: MANAGE UE POLICY COMMAND or UE POLICY PROVISIONING REQUEST
+                df_dl_nas = pd.DataFrame({'hex': hex_str[start:]})
+                df_payload, ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC = decoder.ursp_decoder(df_dl_nas)
+                self.pol_cmd_excel = df_payload
+                df_dl_nas, ef_ursp, dl_nas = encoder.ursp_encoder(ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC)
+
+                ursp_info, ursp_conts = display.ursp_to_txt(ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC)
+                pol_cmd_txt = display.payload_to_txt(df_payload)
+                self.rst_show(ef_ursp, dl_nas, ursp_info, ursp_conts, pol_cmd_txt)
+
+            else:
+                self.DE_label.setText(" [DL NAS Transport] No UE policy container")
+                self.DE_label.setStyleSheet("color: red")
+
+        # UL NAS Transport
+        elif '67' in hex_str:
+            start = hex_str.index('67')
+            payload_type = hex_str[start+1]
+            # Payload container type: UE policy container
+            if payload_type == '05':
+                type_int = int(hex_str[start+5], 16) & 0x0F
+                if type_int in spec.pol_msg_types:
+                    pol_msg_type = spec.pol_msg_types[type_int]
+                    self.DE_label.setText(" [UL NAS Transport] UE policy container type: " + pol_msg_type)
+                    if 'REJECT' in pol_msg_type:
+                        self.DE_label.setStyleSheet("color: red")
+                    else:
+                        self.DE_label.setStyleSheet("color: blue")
+            else:
+                self.DE_label.setText(" [UL NAS Transport] No UE policy container")
+                self.DE_label.setStyleSheet("color: red")
+
+        # Registration request
+        elif '41' in hex_str:
+            # Payload container type: UE policy container
+            if '85' in hex_str:
+                payload = hex_str[hex_str.index('85'):]
+                usi_rst = decoder.usi_decoder(payload)
+                self.rst_text.setText(usi_rst)
+                self.tabs.setCurrentIndex(2)
+                self.save_btn.setEnabled(True)
+                self.save_label.clear()
+            else:
+                self.DE_label.setText(" [Registration request] No UE policy container")
+                self.DE_label.setStyleSheet("color: red")
         else:
-            self.DE_label.setText(" * No 5GMM 'Downlink NAS Transport' message in these hex values.")
+            self.DE_label.setText(" No UE policy container in these hex values.")
             self.DE_label.setStyleSheet("color: red")
-            return
-
-        df_payload, ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC = ursp_decoder.decoder(df_dl_nas)
-        self.pol_cmd_excel = df_payload
-        df_dl_nas, ef_ursp, dl_nas = ursp_encoder.encoder(ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC)
-
-        ursp_info, ursp_conts = display.ursp_to_txt(ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC)
-        pol_cmd_txt = display.payload_to_txt(df_payload)
-        self.rst_show(ef_ursp, dl_nas, ursp_info, ursp_conts, pol_cmd_txt)
 
     def rst_show(self, ef_ursp, dl_nas, ursp_info, ursp_conts, pol_cmd_txt):
         line_width = 213

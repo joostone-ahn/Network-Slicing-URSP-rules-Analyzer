@@ -5,6 +5,12 @@ debug_mode = 0
 tablefmt_list = ["pipe", "simple", "grid", "fancy_grid", "orgtbl", "tsv"]
 tablefmt = tablefmt_list[4]
 
+def usi_to_txt(usi_list):
+    header = ['hex', 'desc']
+    df_usi = pd.DataFrame(usi_list, columns=header)
+    usi_conts = df_usi.to_markdown(tablefmt=tablefmt, numalign='left', index=False)
+    return usi_conts
+
 def payload_to_txt(df_payload):
 
     pol_cmd_txt = df_payload.to_markdown(tablefmt=tablefmt, numalign='left', index=False)
@@ -21,8 +27,8 @@ def ursp_to_txt(ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC):
 
     ursp_info = []
     ursp_info.append(format(int(PTI), '02X'))
-    ursp_info.append(format(int(UPSC), '02X'))
     ursp_info.append(PLMN)
+    ursp_info.append(format(int(UPSC), '02X'))
 
     header1 = ['pti', 'plmn', 'upsc']
     df_ursp_info = pd.DataFrame([ursp_info], columns=header1)

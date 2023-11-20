@@ -1,34 +1,50 @@
 import pandas as pd
-import spec
+import spec, display
 
 debug_mode = 0
 
-def decoder(df_dl_nas):
-    # payload_type = UE policy container
+def ursp_decoder(df_dl_nas):
     df_dl_nas = df_dl_nas.copy()
     df_dl_nas['dec'] = [int(x, 16) for x in df_dl_nas['hex']]
     df_dl_nas = df_dl_nas[['dec', 'hex']]
     df_dl_nas['desc'] = ''
 
-    if int(df_dl_nas['hex'][1], 16) == 5:
-        payload_len = int(df_dl_nas.iloc[2:4]['hex'].str.cat(), 16)
-        df_payload = df_dl_nas[4:4 + payload_len].reset_index(drop=True)
+    payload_len = int(df_dl_nas.iloc[2:4]['hex'].str.cat(), 16)
+    df_payload = df_dl_nas[0:4 + payload_len].reset_index(drop=True)
+    df_payload.iloc[0, -1] = 'DL NAS Transport'
+    df_payload.iloc[1, -1] = 'Payload container type: UE policy container'
+    df_payload.iloc[2, -1] = 'Length of payload container contents[0]'
+    df_payload.iloc[3, -1] = 'Length of payload container contents[1]'
 
-    PTI = int(df_payload['hex'][0],16)
-    df_payload.iloc[0, -1] = 'Procedure transaction identity'
+    PTI = int(df_payload['hex'][4],16)
+    df_payload.iloc[4, -1] = 'Procedure transaction identity(PTI)'
 
-    type_int = int(df_payload['hex'][1], 16) & 0x0F
+    type_int = int(df_payload['hex'][5], 16) & 0x0F
     if type_int in spec.pol_msg_types:
         pol_msg_type = spec.pol_msg_types[type_int]
     else:
         pol_msg_type = 'Reserved'
-    df_payload.iloc[1, -1] = 'UE policy delivery service message type: ' + pol_msg_type
 
-    upsm_list_len = int(df_payload.iloc[2:4]['hex'].str.cat(), 16)
-    df_payload.iloc[2, -1] = 'Length of UE policy section management list contents[0]'
-    df_payload.iloc[3, -1] = 'Length of UE policy section management list contents[1]'
+    # MANAGE UE POLICY COMMAND
+    if type_int == 1:
+        df_payload.iloc[5, -1] = 'UE policy delivery service message type: ' + pol_msg_type
+    else:
+        df_payload.iloc[5, -1] = 'UE policy delivery service message type: ' + pol_msg_type
+        print(df_payload)
+        return
 
-    df_UPSM_list = df_payload.iloc[4:4 + upsm_list_len].reset_index().rename(columns={'index': 'ind'})
+    upsm_list_len = int(df_payload.iloc[6:8]['hex'].str.cat(), 16)
+    df_payload.iloc[6, -1] = 'Length of UE policy section management list contents[0]'
+    df_payload.iloc[7, -1] = 'Length of UE policy section management list contents[1]'
+
+    if payload_len != (upsm_list_len+4):
+        print('*** [ERROR] Length of payload container contents')
+        print("payload_len", payload_len)
+        print("upsm_list_len", upsm_list_len)
+        print(df_payload)
+        return
+
+    df_UPSM_list = df_payload.iloc[8:8 + upsm_list_len].reset_index().rename(columns={'index': 'ind'})
     UPSM_list = []
     cnt = 0
     while cnt < len(df_UPSM_list):
@@ -41,7 +57,6 @@ def decoder(df_dl_nas):
         UPSM_list.append(df_UPSM_list.iloc[cnt:cnt + upsm_len])
         cnt += upsm_len
         if debug_mode: print('upsm_len:', upsm_len)
-
     for subset in UPSM_list:
         df_UPSM = subset.reset_index(drop=True)
         df_payload.iloc[df_UPSM['ind'][0], -1] = 'MCC digit 2, MCC digit 1'
@@ -355,3 +370,46 @@ def decoder(df_dl_nas):
 
     return df_payload, ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC
 
+def usi_decoder(payload):
+    usi_list = []
+    usi_list.append([payload[0], 'Payload container type: UE policy container'])
+    usi_list.append([payload[1], 'Payload container IEI'])
+    usi_list.append([payload[2], 'Length of payload container contents[0]'])
+    usi_list.append([payload[3], 'Length of payload container contents[1]'])
+    payload_len = int(payload[2] + payload[3], 16)
+    payload = payload[4:4+payload_len]
+
+    usi_list.append([payload[0], 'Procedure transaction identity(PTI)'])
+    usi_list.append([payload[1], 'UE policy delivery service message type: UE STATE INDICATION'])
+    usi_list.append([payload[2], 'Length of UPSI list contents [0]'])
+    usi_list.append([payload[3], 'Length of UPSI list contents [1]'])
+    upsi_list_len = int(payload[2] + payload[3], 16)
+    upsi_list_item = payload[4:4 + upsi_list_len]
+    cnt = 0
+    while cnt < len(upsi_list_item):
+        usi_list.append([upsi_list_item[cnt], 'Length of UPSI sublist [0]'])
+        usi_list.append([upsi_list_item[cnt+1], 'Length of UPSI sublist [1]'])
+        upsi_sub_len = int(upsi_list_item[cnt] + upsi_list_item[cnt+1], 16)
+        cnt += 2
+        upsi_sub_item = upsi_list_item[cnt:cnt+upsi_sub_len]
+        usi_list.append([upsi_sub_item[0], 'MCC digit 2 + MCC digit 1'])
+        usi_list.append([upsi_sub_item[1], 'MNC digit 3 + MCC digit 3'])
+        usi_list.append([upsi_sub_item[2], 'MNC digit 2 + MNC digit 1'])
+        cnt += 3
+        upsc_item = upsi_sub_item[3:]
+        for i in range(len(upsc_item)):
+            usi_list.append([upsc_item[i], 'UPSC ' + str(i // 2) + ' [' + str(i % 2) + ']'])
+        cnt += len(upsc_item)
+    payload_etc = payload[4 + upsi_list_len:]
+    usi_list.append([payload_etc[0], 'UE policy classmark'])
+    if payload_etc[1:]:
+        for i in range(len(payload_etc[1:])):
+            usi_list.append([payload_etc[1:][i], 'OS Id [' + str(i) + ']'])
+
+    usi_rst = '=' * 213 + '\n'
+    usi_rst += 'UE STATE INDICATION' + '\n'
+    usi_rst += '=' * 213 + '\n'
+    usi_conts = display.usi_to_txt(usi_list)
+    usi_rst += usi_conts
+
+    return usi_rst
