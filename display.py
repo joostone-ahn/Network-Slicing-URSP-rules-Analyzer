@@ -15,12 +15,6 @@ def payload_to_txt(df_payload):
 
     pol_cmd_txt = df_payload.to_markdown(tablefmt=tablefmt, numalign='left', index=False)
 
-    if debug_mode:
-        print('MANAGE UE POLICY COMMAND')
-        print(pol_cmd_txt)
-        print()
-        print()
-
     return pol_cmd_txt
 
 def ursp_to_txt(ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC):
@@ -49,15 +43,6 @@ def ursp_to_txt(ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC):
     #     df_ursp[col] = df_ursp[col].where(~mask, '')
 
     ursp_conts = df_ursp.to_markdown(tablefmt=tablefmt,numalign='left', index=False)
-
-    if debug_mode:
-        print("URSP RULE")
-        print(ursp_info)
-        print()
-
-        print(ursp_conts)
-        print()
-        print()
 
     return ursp_info, ursp_conts
 
