@@ -415,9 +415,7 @@ def usi_decoder(payload):
         for i in range(len(payload_etc[1:])):
             usi_list.append([payload_etc[1:][i], 'OS Id [' + str(i) + ']'])
 
-    usi_rst = '=' * 213 + '\n'
-    usi_rst += 'UE STATE INDICATION' + '\n'
-    usi_rst += '=' * 213 + '\n'
+    usi_rst = '[UE STATE INDICATION]' + '\n'*2
     usi_conts = display.usi_to_txt(usi_list)
     usi_rst += usi_conts
 
