@@ -8,7 +8,7 @@ pol_msg_types = {
 }
 
 pol_part_types = {
-    0x01: "URSP_Analyzer",
+    0x01: "URSP",
     0x02: "ANDSP",
     0x03: "V2XP",
     0x04: "ProSeP"
@@ -39,6 +39,14 @@ td_types = {
     0b10100000: "OS App Id",
     0b10100001: "Destination MAC address range"
 }
+
+td_conn_capa = {
+    0b00000001: "IMS",
+    0b00000010: "MMS",
+    0b00000100: "SUPL",
+    0b00001000: "Internet"
+}
+
 td_zero = ["Match-all"]
 
 rsd_types = {
@@ -60,4 +68,5 @@ rsd_zero = ["Multi-access preference", "Non-seamless non-3GPP offload indication
 rsd_one = ['SSC mode', "PDU session type", "Preferred access type", "PDU session pair ID", "RSN"]
 
 td_types_rev = {v: k for k, v in td_types.items()}
+td_conn_capa_rev = {v: k for k, v in td_conn_capa.items()}
 rsd_types_rev = {v: k for k, v in rsd_types.items()}

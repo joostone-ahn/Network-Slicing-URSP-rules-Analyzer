@@ -36,6 +36,12 @@ def ursp_encoder(ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC):
                 for byte in td_val_byte:
                     payload_pvtd.append(format(byte, '02X'))
 
+            elif td_type == "Connection capabilities":
+                td_conn_capa = td_val.split(',')
+                for item in td_conn_capa:
+                    item = item.replace(' ','')
+                    payload_pvtd.append(format(spec.td_conn_capa_rev[item], '02X'))
+
             elif td_type in ['OS App Id', 'OS Id + OS App Id']:
                 os_id, app_id = td_val.split('/')
                 app_id = app_id.replace(' ', '')

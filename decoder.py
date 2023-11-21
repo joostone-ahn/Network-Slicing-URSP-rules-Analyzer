@@ -190,6 +190,15 @@ def ursp_decoder(df_dl_nas):
                                 td_val = bytes.fromhex(apn_val_hex)
                                 td_val = td_val.decode('ascii')
 
+                            elif td_type == "Connection capabilities":
+                                td_conn_capa = []
+                                capa_cnt = 0
+                                for octet in df_TD['hex'][1:]:
+                                    td_conn_capa.append(spec.td_conn_capa[int(octet, 16)])
+                                    df_payload.iloc[df_TD['ind'][1+capa_cnt], -1] = 'connection capability identifier: %s'%td_conn_capa[-1]
+                                    capa_cnt += 1
+                                td_val = ', '.join(td_conn_capa)
+
                             elif td_type in ['OS App Id', 'OS Id + OS App Id']:
                                 os_id = df_TD['hex'][1:1 + 16].str.cat()
                                 for os_id_cnt in range(16):

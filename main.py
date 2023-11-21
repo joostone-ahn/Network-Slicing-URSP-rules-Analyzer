@@ -55,7 +55,7 @@ class MyWidget(QWidget):
         self.show()
 
         copyright_label = QLabel('Copyright © 2023 JUSEOK AHN<ajs3013@lguplus.co.kr> All rights reserved.')
-        copyright_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)  # 텍스트를 중앙으로 정렬
+        copyright_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         main_layout.addWidget(copyright_label)
 
     def init_tab1(self):
@@ -251,7 +251,9 @@ Sample
         # td_type
         comb = QComboBox()
         comb.setFixedWidth(wide_width)
-        td_types = ['Match-all', 'OS Id + OS App Id', 'DNN']  # Spec fully support TBD (spec.TD_types)
+
+        # Spec Partially support (spec.TD_types)
+        td_types = ['Match-all', 'OS Id + OS App Id', 'DNN', 'Connection capabilities']
         for td_type in td_types:
             comb.addItem(td_type)
         comb.currentIndexChanged.connect(lambda: self.td_type_changed(ursp_num))
@@ -428,6 +430,8 @@ Sample
             self.ursp_sum[ursp_num][3].clear()
             if self.ursp_sum[ursp_num][2].currentText() == 'OS Id + OS App Id':
                 self.ursp_sum[ursp_num][3].setText('Android/OS_APP_Id')
+            elif self.ursp_sum[ursp_num][2].currentText() == 'Connection capabilities':
+                self.ursp_sum[ursp_num][3].setText('IMS, MMS, SUPL, Internet')
         else:
             self.ursp_sum[ursp_num][3].setEnabled(False)
             self.ursp_sum[ursp_num][3].setText('-')
@@ -500,6 +504,7 @@ Sample
         if missing_values:
             self.EN_label.setText(' * Please fill out the red boxes and press the "Encoding" button again.')
             self.EN_label.setStyleSheet("color: red")
+            self.EN_label.setFont(font_log)
             self.highlight_missing_values()
             return
 
