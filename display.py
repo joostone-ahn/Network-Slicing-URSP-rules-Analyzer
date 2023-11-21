@@ -45,7 +45,14 @@ def ursp_to_txt(ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC):
     ursp_conts = df_ursp.to_markdown(tablefmt=tablefmt,numalign='left', index=False)
 
     return ursp_info, ursp_conts
-
+def hex_format(hex_stream, bytes_per_line=16):
+    hex_list = [hex_stream[i:i+2] for i in range(0, len(hex_stream), 2)]
+    result = []
+    for i in range(0, len(hex_list), bytes_per_line):
+        hex_line = hex_list[i:i + bytes_per_line]
+        hex_str = ' '.join(hex_line)
+        result.append(f"{i:04X}   {hex_str}")
+    return '\n'.join(result)
 
 # def ursp_to_text(ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC):
 #
@@ -88,14 +95,3 @@ def ursp_to_txt(ursp_sum, rsd_sum, rsd_conts, PTI, PLMN, UPSC):
 #
 #     print(text)
 #     return text
-
-# def hex_format(hex_stream, bytes_per_line=16):
-#     hex_list = [hex_stream[i:i+2] for i in range(0, len(hex_stream), 2)]
-#     result = []
-#     for i in range(0, len(hex_list), bytes_per_line):
-#         hex_line = hex_list[i:i + bytes_per_line]
-#         hex_str = ' '.join(hex_line)
-#         result.append(f"{i:04X}   {hex_str}")
-#
-#     print('\n'.join(result))
-#     return '\n'.join(result)

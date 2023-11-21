@@ -51,7 +51,7 @@ class MyWidget(QWidget):
         main_layout.addWidget(self.tabs)
         self.setLayout(main_layout)
         self.setWindowTitle('URSP analyzer v1.0')
-        self.setGeometry(100, 100, 1700, 800)
+        self.setGeometry(100, 100, 1700, 900)
         self.show()
 
         copyright_label = QLabel('Copyright © 2023 JUSEOK AHN<ajs3013@lguplus.co.kr> All rights reserved.')
@@ -710,26 +710,25 @@ Sample
             self.DE_label.setStyleSheet("color: red")
 
     def rst_show(self, ef_ursp, dl_nas, ursp_info, ursp_conts, pol_cmd_txt):
-        line_width = 213
         enter = '\n'
-        line = '='*line_width + enter
+        line_length = 214
+        line = '-'*line_length
 
         rst = ''
-        rst += 'EF_URSP (USIM)' + enter
+        rst += '[SIM EF_URSP]' + enter
         rst += ef_ursp + enter*2
-        rst += 'DL NAS TRANSPORT' + enter
-        rst += dl_nas + enter*3
+        rst += '[DL NAS TRANSPORT]' + enter
+        rst += dl_nas + enter*2
+        rst += display.hex_format(dl_nas) + enter*2
+        rst += line + enter*2
 
-        rst += line
-        rst += 'URSP RULE' + enter
-        rst += line + enter
+        rst += '[URSP RULE]' + enter*2
         rst += ursp_info + enter*2
-        rst += ursp_conts + enter*3
+        rst += ursp_conts + enter*2
+        rst += line + enter*2
 
-        rst += line
-        rst += 'MANAGE UE POLICY COMMAND' + enter
-        rst += line + enter
-        rst += pol_cmd_txt + enter
+        rst += '[MANAGE UE POLICY COMMAND]' + enter*2
+        rst += pol_cmd_txt
 
         self.rst_text.setText(rst)
         self.tabs.setCurrentIndex(2)
