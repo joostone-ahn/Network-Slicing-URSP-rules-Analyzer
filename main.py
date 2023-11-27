@@ -245,6 +245,9 @@ Sample
         line = QLineEdit()
         line.setFixedWidth(nar_width)
         line.setAlignment(Qt.AlignLeft)
+        line.setToolTip("""Precedence value of URSP rule
+The precedence value of URSP rule field is used to specify the precedence of the URSP rule among all URSP rules in the URSP. This field includes the binary encoded value of the precedence value in the range from 0 to 255 (decimal). The higher the value of the precedence value field, the lower the precedence of the URP rule is. Multiple URSP rules in the URSP shall not have the same precedence value.
+        """)
         setattr(self, f'ursp_pv_{ursp_num}', line)
         ursp_sub1.append(line)
 
@@ -299,6 +302,8 @@ Sample
         line = QLineEdit()
         line.setFixedWidth(nar_width)
         line.setAlignment(Qt.AlignLeft)
+        line.setToolTip("""Precedence value of route selection descriptor
+The precedence value of route selection descriptor field is used to specify the precedence of the route selection descriptor among all route selection descriptors in the URSP rule. This field includes the binary encoded value of the precedence value in the range from 0 to 255 (decimal). The higher the value of the precedence value field, the lower the precedence of the route selection descriptor is.                """)
         setattr(self, f'rsd_pv_{ursp_num}_{rsd_num}', line)
         rsd_sub2.append(line)
 
